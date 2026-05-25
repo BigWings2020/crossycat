@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Crossy Cat</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #9bd3ff; font-family: 'Trebuchet MS', system-ui, sans-serif; }
+  canvas { display: block; }
+  .hud {
+    position: fixed; color: white; user-select: none; pointer-events: none;
+    text-shadow: 2px 2px 0 #2c5f99, -1px -1px 0 #2c5f99, 1px -1px 0 #2c5f99, -1px 1px 0 #2c5f99;
+  }
+  #score { top: 18px; left: 20px; font-size: 36px; font-weight: bold; }
+  #best  { top: 60px; left: 20px; font-size: 18px; opacity: 0.95; }
+  #instructions {
+    bottom: 18px; left: 0; right: 0; text-align: center; font-size: 14px; opacity: 0.9;
+  }
+  #title {
+    top: 18px; left: 0; right: 0; text-align: center; font-size: 26px; font-weight: bold;
+    letter-spacing: 1px;
+  }
+  #gameover {
+    top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;
+    display: none; background: rgba(0,0,0,0.35); padding: 28px 48px; border-radius: 18px;
+  }
+  #gameover.show { display: block; }
+  #gameover .title { font-size: 56px; font-weight: bold; }
+  #gameover .sub { font-size: 22px; margin-top: 12px; }
+  #gameover .restart { font-size: 18px; margin-top: 20px; opacity: 0.9; }
+  #debug {
+    position: fixed; top: 12px; right: 12px;
+    background: rgba(0,0,0,0.62); color: #eee;
+    padding: 8px 10px; border-radius: 8px;
+    font-family: system-ui, sans-serif; font-size: 13px;
+    display: flex; flex-direction: column; gap: 8px;
+    user-select: none; min-width: 210px;
+  }
+  #debug.collapsed { min-width: 0; }
+  #debug.collapsed .body { display: none; }
+  #debug .header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px;
+  }
+  #debug .header .title {
+    font-size: 11px; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  #debug .toggle {
+    width: 22px; height: 22px; padding: 0; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    background: #2c3344; color: #eee; border: 1px solid #4a5266; border-radius: 4px;
+    font: inherit; cursor: pointer;
+  }
+  #debug .toggle:hover { background: #3a4258; }
+  #debug .body {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  #debug .heading { font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+  #debug .row { display: flex; flex-direction: column; gap: 4px; }
+  #debug .row > span.lbl { font-size: 12px; opacity: 0.9; }
+  #debug select {
+    background: #222; color: #fff; border: 1px solid #555;
+    padding: 3px 6px; border-radius: 4px; font: inherit;
+  }
+  #debug input[type="range"] { width: 100%; accent-color: #aacf65; }
+  #debug button:not(.toggle) {
+    background: #2c3344; color: #eee; border: 1px solid #4a5266; border-radius: 6px;
+    padding: 6px 10px; font: inherit; cursor: pointer; text-align: left;
+  }
+  #debug button:not(.toggle):hover { background: #3a4258; }
+</style>
+</head>
+<body>
+<div id="title" class="hud">CROSSY CAT</div>
+<div id="score" class="hud">0</div>
+<div id="best"  class="hud">Best: 0</div>
+<div id="instructions" class="hud">Arrow Keys / WASD to hop  ·  Tap / swipe on mobile</div>
+<div id="gameover" class="hud">
+  <div class="title">Game Over</div>
+  <div class="sub">Final score: <span id="finalScore">0</span></div>
+  <div class="restart">Press <b>SPACE</b> or tap to play again</div>
+</div>
+<div id="debug" class="collapsed">
+  <div class="header">
+    <span class="title">Debug</span>
+    <button class="toggle" id="debugToggle" aria-label="Expand">+</button>
+  </div>
+  <div class="body">
+  <div class="heading">Sound</div>
+  <div class="row">
+    <span class="lbl">Jump</span>
+    <select id="fxJump">
+      <option value="jump">Retro jump</option>
+      <option value="honk">Car horn</option>
+      <option value="none">None</option>
+    </select>
+    <input id="volJump" type="range" min="0" max="1" step="0.01" value="0.45">
+  </div>
+  <div class="row">
+    <span class="lbl">Car horn</span>
+    <select id="fxHonk">
+      <option value="honk">Car horn</option>
+      <option value="jump">Retro jump</option>
+      <option value="none">None</option>
+    </select>
+    <input id="volHonk" type="range" min="0" max="1" step="0.01" value="0.35">
+  </div>
+  <div class="row">
+    <span class="lbl">Music</span>
+    <select id="musicTrack">
+      <option value="shuffle1">Red Light Shuffle</option>
+      <option value="shuffle2">Red Light Shuffle (alt)</option>
+      <option value="none">None</option>
+    </select>
+    <input id="volMusic" type="range" min="0" max="1" step="0.01" value="0.3">
+  </div>
+  <div class="row">
+    <span class="lbl">Water ambient</span>
+    <select id="waterAmbientOnOff">
+      <option value="on">On</option>
+      <option value="off">Off</option>
+    </select>
+    <input id="volWater" type="range" min="0" max="1" step="0.01" value="0.5">
+  </div>
+  <div class="row">
+    <span class="lbl">Splash</span>
+    <input id="volSplash" type="range" min="0" max="1" step="0.01" value="0.7">
+  </div>
+  <label style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+    <input id="muteAll" type="checkbox"> Mute all
+  </label>
+  <div class="heading" style="margin-top:6px;">Camera</div>
+  <button id="btnRotate45">Rotate 90°</button>
+  <button id="btnResetRotation">Reset rotation</button>
+  <div class="heading" style="margin-top:6px;">Stats</div>
+  <div class="row">
+    <span class="lbl">FPS: <span id="statFps">–</span></span>
+    <span class="lbl">Draw calls: <span id="statCalls">–</span></span>
+    <span class="lbl">Triangles: <span id="statTris">–</span></span>
+  </div>
+  <label style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+    <input id="wireframeOn" type="checkbox"> Wireframe overlay
+  </label>
+  </div>
+</div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

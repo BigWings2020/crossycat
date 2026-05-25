@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>GLB Viewer — Car_Green.glb</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #404858; overflow: hidden; font-family: system-ui, sans-serif; color: #eee; }
+  canvas { display: block; }
+  #hud { position: fixed; top: 10px; left: 12px; font-size: 13px; opacity: 0.8; pointer-events: none; }
+  #stats { position: fixed; bottom: 10px; left: 12px; font-size: 12px; opacity: 0.75; pointer-events: none; white-space: pre; }
+  #panel {
+    position: fixed; top: 10px; right: 12px; font-size: 13px;
+    background: rgba(20,20,28,0.65); padding: 10px 12px; border-radius: 8px;
+    display: flex; flex-direction: column; gap: 8px; min-width: 170px;
+  }
+  #panel label { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+  #panel input[type="range"] { width: 100%; }
+  #panel .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  #panel .val { font-variant-numeric: tabular-nums; opacity: 0.75; min-width: 28px; text-align: right; }
+  #panel button {
+    background: #2c3344; color: #eee; border: 1px solid #4a5266; border-radius: 6px;
+    padding: 6px 8px; font: inherit; cursor: pointer;
+  }
+  #panel button:hover { background: #3a4258; }
+  #texModal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+  }
+  #texModal.show { display: flex; }
+  #texModal .content {
+    background: #2a2e38; padding: 20px 22px; border-radius: 10px;
+    max-width: 92vw; max-height: 92vh; overflow: auto; position: relative;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  #texModal .title { font-size: 16px; margin-bottom: 14px; opacity: 0.9; }
+  #texModal .close {
+    position: absolute; top: 8px; right: 10px;
+    background: none; border: none; color: #ddd; font-size: 28px; line-height: 1;
+    cursor: pointer; padding: 4px 10px; border-radius: 6px;
+  }
+  #texModal .close:hover { background: rgba(255,255,255,0.08); }
+  #texList {
+    display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+  .tex-card {
+    background: #1a1d24; padding: 10px; border-radius: 6px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .tex-card .meta { font-size: 12px; opacity: 0.75; font-family: ui-monospace, monospace; }
+  .tex-card canvas {
+    display: block; max-width: 100%; height: auto; image-rendering: pixelated;
+    background:
+      repeating-conic-gradient(#333 0 25%, #2a2a2a 0 50%) 0 0 / 16px 16px;
+  }
+</style>
+</head>
+<body>
+<div id="hud">drag to orbit · scroll to zoom · right-drag to pan</div>
+<div id="stats">loading…</div>
+<div id="panel">
+  <label><input id="wire" type="checkbox" /> Wireframe overlay</label>
+  <label><input id="solid" type="checkbox" checked /> Show solid</label>
+  <label><input id="unlit" type="checkbox" /> Texture only (unlit)</label>
+  <label><input id="grid" type="checkbox" checked /> Show grid</label>
+  <div class="row">
+    <span>Exposure</span>
+    <span class="val" id="expVal">1.6</span>
+  </div>
+  <input id="exposure" type="range" min="0.2" max="3" step="0.05" value="1.6" />
+  <button id="showTex">Show texture map</button>
+</div>
+<div id="texModal">
+  <div class="content">
+    <button class="close" title="Close (Esc)">×</button>
+    <div class="title">Textures</div>
+    <div id="texList"></div>
+  </div>
+</div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="./viewer.js"></script>
+</body>
+</html>
